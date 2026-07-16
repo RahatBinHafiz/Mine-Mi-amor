@@ -1,0 +1,8 @@
+{
+  "name": "Our Little Universe",
+  "description": "An interactive, magical love story timeline and relationship celebration applet for Suhi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
