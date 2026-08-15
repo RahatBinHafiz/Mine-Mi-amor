@@ -33,12 +33,14 @@ export default function InfinityLovePage({
   currentSongTitle
 }: InfinityLovePageProps) {
   // State
-  const [totalItems, setTotalItems] = useState(100);
+  const [totalItems, setTotalItems] = useState(65);
   const [loveWord, setLoveWord] = useState('I love you Suhana');
   const [theme, setTheme] = useState<'rosegold' | 'sunset' | 'violet' | 'ruby' | 'starlight'>('rosegold');
   const [mode, setMode] = useState<'heart' | 'helix'>('heart');
   const [is3DOrbit, setIs3DOrbit] = useState(true);
   const [stageRotate, setStageRotate] = useState({ x: 15, y: -20, z: 0 });
+  const [responsiveScale, setResponsiveScale] = useState(0.75);
+  const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showSettings, setShowSettings] = useState(false);
@@ -47,6 +49,28 @@ export default function InfinityLovePage({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic Responsive Scale to ensure perfect fit on all mobile screens
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const mobile = w < 640;
+      setIsMobile(mobile);
+
+      // On initial load or resize, calculate scale factor relative to 540px base heart size
+      // Leaving safe margins for headers, footers and screen edges
+      const availableW = Math.min(w * 0.9, 560);
+      const availableH = Math.min((h - 180) * 0.9, 560);
+      const computedScale = Math.min(availableW / 530, availableH / 470, 1.05);
+      
+      setResponsiveScale(Math.max(0.48, Math.min(1.15, computedScale)));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auto 3D orbit animation
   useEffect(() => {
@@ -255,7 +279,7 @@ export default function InfinityLovePage({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="control-panel absolute top-16 right-4 sm:right-8 z-40 w-80 sm:w-96 p-5 rounded-2xl bg-black/85 border border-pink/30 backdrop-blur-xl shadow-2xl shadow-pink/10 text-cream"
+            className="control-panel absolute top-16 right-2 sm:right-8 z-40 w-[calc(100vw-1rem)] sm:w-96 max-h-[82vh] overflow-y-auto p-4 sm:p-5 rounded-2xl bg-black/90 border border-pink/30 backdrop-blur-xl shadow-2xl shadow-pink/10 text-cream custom-scrollbar"
           >
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <span className="text-sm font-semibold flex items-center gap-2">
@@ -327,7 +351,7 @@ export default function InfinityLovePage({
             </div>
 
             {/* Mode & density selector */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div>
                 <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5 font-medium">
                   Formation
@@ -354,18 +378,24 @@ export default function InfinityLovePage({
 
               <div>
                 <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5 font-medium">
-                  Words Count ({totalItems})
+                  Words Density ({totalItems})
                 </label>
-                <div className="flex rounded-xl bg-white/5 p-1 border border-white/10">
-                  {[80, 100, 120].map(cnt => (
+                <div className="grid grid-cols-4 gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                  {[
+                    { cnt: 45, label: '45' },
+                    { cnt: 65, label: '65' },
+                    { cnt: 85, label: '85' },
+                    { cnt: 100, label: '100' }
+                  ].map(opt => (
                     <button
-                      key={cnt}
-                      onClick={() => setTotalItems(cnt)}
-                      className={`flex-1 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
-                        totalItems === cnt ? 'bg-pink text-white font-semibold' : 'text-white/60 hover:text-white'
+                      key={opt.cnt}
+                      onClick={() => setTotalItems(opt.cnt)}
+                      className={`py-1.5 text-[11px] rounded-lg transition-all cursor-pointer text-center ${
+                        totalItems === opt.cnt ? 'bg-pink text-white font-semibold' : 'text-white/60 hover:text-white'
                       }`}
+                      title={`${opt.cnt} words`}
                     >
-                      {cnt}
+                      {opt.label}
                     </button>
                   ))}
                 </div>
@@ -394,9 +424,9 @@ export default function InfinityLovePage({
         <div className="heart-center-glow top-1/2 left-1/2" />
 
         {/* DRAG INTERACTION HINT */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60 text-center">
-          <p className="text-xs text-cream/70 font-sans tracking-wide">
-            ✨ Drag to rotate in 3D • Tap anywhere for sparks ✨
+        <div className="absolute top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-70 text-center px-4 w-full">
+          <p className="text-[11px] sm:text-xs text-cream/80 font-sans tracking-wide">
+            ✨ {isMobile ? 'Touch & drag to rotate 3D heart' : 'Drag to rotate in 3D • Tap anywhere for sparks'} ✨
           </p>
         </div>
 
@@ -406,7 +436,7 @@ export default function InfinityLovePage({
             ref={stageRef}
             className="love-stage"
             style={{
-              transform: `rotateX(${stageRotate.x}deg) rotateY(${stageRotate.y}deg) rotateZ(${stageRotate.z}deg)`
+              transform: `scale(${responsiveScale}) rotateX(${stageRotate.x}deg) rotateY(${stageRotate.y}deg) rotateZ(${stageRotate.z}deg)`
             }}
           >
             {Array.from({ length: totalItems }).map((_, index) => {

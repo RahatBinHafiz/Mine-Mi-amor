@@ -1512,19 +1512,20 @@ input[type="file"] {
 #ui {
   position: relative;
   width: 100%;
-  height: calc(100vh - 120px);
-  min-height: 520px;
+  height: 100%;
+  min-height: 380px;
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 1200px;
+  perspective: 1100px;
   transform-style: preserve-3d;
   user-select: none;
+  touch-action: none;
 }
 
 .love-stage {
   position: absolute;
-  top: 48%;
+  top: 50%;
   left: 50%;
   width: 0;
   height: 0;
@@ -1558,17 +1559,31 @@ input[type="file"] {
   animation: love_word_rot 12s infinite linear;
   animation-delay: calc(var(--i) * -1 * var(--delay, 120ms));
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(0.75rem, 1.8vw, 1.05rem);
+  font-size: clamp(0.6rem, 1.5vw, 0.95rem);
   font-weight: 700;
   white-space: nowrap;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: #ff6eb4;
   text-shadow: 
-    0 0 10px rgba(255, 110, 180, 0.9), 
-    0 0 25px rgba(255, 45, 120, 0.8),
-    0 0 45px rgba(194, 24, 91, 0.6);
+    0 0 8px rgba(255, 110, 180, 0.85), 
+    0 0 20px rgba(255, 45, 120, 0.7),
+    0 0 35px rgba(194, 24, 91, 0.5);
   transition: color 0.3s ease, text-shadow 0.3s ease;
   cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  #ui {
+    perspective: 750px;
+    min-height: 320px;
+  }
+  .love_word {
+    font-size: clamp(0.48rem, 2.4vw, 0.68rem);
+    letter-spacing: 0.4px;
+    text-shadow: 
+      0 0 5px rgba(255, 110, 180, 0.85), 
+      0 0 12px rgba(255, 45, 120, 0.7);
+  }
 }
 
 .love_word:hover {
