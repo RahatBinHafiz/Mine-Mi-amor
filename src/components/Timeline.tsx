@@ -140,7 +140,7 @@ export default function Timeline() {
               const isEven = index % 2 === 0;
               const displayImage = syncedImages[item.id] || item.defaultImage;
 
-              // Dynamically update the 5th item (index 4 / id 4) to be the dynamic monthly anniversary
+              // Dynamically update the milestone item to be the 5th Month Anniversary
               const displayDate = item.id === 4 ? getCurrentAnniversaryDateStr() : item.date;
               const displayTitle = item.id === 4 ? `Our ${getAnniversaryOrdinal()} Month Anniversary 💕` : item.title;
 

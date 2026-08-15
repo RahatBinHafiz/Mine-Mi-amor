@@ -24,8 +24,13 @@ import BackgroundCanvas from './components/BackgroundCanvas';
 import { getAnniversaryOrdinal } from './lib/anniversary';
 import Timeline from './components/Timeline';
 import { GalleryPhoto } from './types';
+import InfinityLovePage from './components/InfinityLovePage';
+import BloomingRosesPage from './components/BloomingRosesPage';
 
 export default function App() {
+  // Page routing state
+  const [currentPage, setCurrentPage] = useState<'home' | 'infinity-love' | 'blooming-roses'>('home');
+
   // Intro screen states
   const [showIntro, setShowIntro] = useState(true);
   const [typingText, setTypingText] = useState('');
@@ -57,10 +62,24 @@ export default function App() {
   // Music Player state
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [currentSongTitle, setCurrentSongTitle] = useState('Upload a song to get started 🎵');
+  const [currentSongTitle, setCurrentSongTitle] = useState('Dandelions 🌼');
   const [songProgress, setSongProgress] = useState(0);
   const [songDuration, setSongDuration] = useState('0:00');
   const [songCurrentTime, setSongCurrentTime] = useState('0:00');
+  const [playerError, setPlayerError] = useState<string | null>(null);
+  const [customUrl, setCustomUrl] = useState('');
+  const [barHeights, setBarHeights] = useState<number[]>([5, 5, 5, 5, 5]);
+
+  useEffect(() => {
+    if (!musicPlaying) {
+      setBarHeights([5, 5, 5, 5, 5]);
+      return;
+    }
+    const interval = setInterval(() => {
+      setBarHeights(Array.from({ length: 5 }, () => Math.floor(Math.random() * 28) + 8));
+    }, 120);
+    return () => clearInterval(interval);
+  }, [musicPlaying]);
 
   // Photos Gallery state
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
@@ -159,7 +178,7 @@ export default function App() {
     if (today.getMonth() === 1 && today.getDate() === 21) {
       setShowBirthdayModal(true);
     }
-    // 17th of every month
+    // 17th of the month (Our Monthly Anniversary!)
     if (today.getDate() === 17) {
       setShowMonthlyModal(true);
       launchAnniversarySurprise();
@@ -174,7 +193,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Counter loop calculations (Relationship started: 2026-03-17)
+  // Counter loop calculations (Relationship started: 17 March 2026)
   useEffect(() => {
     const START_DATE = new Date('2026-03-17T00:00:00');
 
@@ -191,36 +210,43 @@ export default function App() {
       const sec = Math.floor((diff / 1000) % 60);
       const min = Math.floor((diff / 1000 / 60) % 60);
       const hrs = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-      const totalMonths = Math.floor(days / 30.44);
-      const years = Math.floor(totalMonths / 12);
-      const months = totalMonths % 12;
+      // Calendar-exact months calculation (Turns 5 on 17 August 2026)
+      let elapsedMonths = (now.getFullYear() - 2026) * 12 + (now.getMonth() - 2);
+      if (now.getDate() < 17) {
+        elapsedMonths -= 1;
+      }
+      const years = Math.floor(Math.max(0, elapsedMonths) / 12);
+      const months = Math.max(0, elapsedMonths) % 12;
 
       setStats({
         years,
         months,
-        days,
+        days: totalDays,
         hours: hrs,
         minutes: min,
         seconds: sec
       });
 
-      // Countdown to next monthly 17th
-      let nextAnniv = new Date(now.getFullYear(), now.getMonth(), 17);
-      if (nextAnniv <= now) {
-        nextAnniv = new Date(now.getFullYear(), now.getMonth() + 1, 17);
+      // Countdown to 5th Month Anniversary on 17 August 2026
+      const target5thAnniv = new Date('2026-08-17T00:00:00');
+      const dDiff = target5thAnniv.getTime() - now.getTime();
+
+      if (dDiff > 0) {
+        const dDays = Math.floor(dDiff / (1000 * 60 * 60 * 24));
+        const dHrs = Math.floor((dDiff / (1000 * 60 * 60)) % 24);
+        const dMins = Math.floor((dDiff / (1000 * 60)) % 60);
+        const dSecs = Math.floor((dDiff / 1000) % 60);
+
+        setCountdownHtml(
+          `<span class="text-2xl md:text-3xl font-extrabold tracking-tight" style="color:var(--pink); text-shadow: 0 0 10px var(--gp)">${dDays}d ${dHrs}h ${dMins}m ${dSecs}s</span><br/><span class="text-xs opacity-80 text-gold tracking-wider font-sans">until our 5th Month Anniversary on 17 August! 💍✨</span>`
+        );
+      } else {
+        setCountdownHtml(
+          `<span class="text-2xl md:text-3xl font-extrabold tracking-tight" style="color:var(--pink); text-shadow: 0 0 10px var(--gp)">Happy 5th Month Anniversary! 💖💍</span><br/><span class="text-xs opacity-90 text-gold tracking-wider font-sans">Celebrating 5 Months of Beautiful Love Today! ✨</span>`
+        );
       }
-
-      const dDiff = nextAnniv.getTime() - now.getTime();
-      const dDays = Math.floor(dDiff / (1000 * 60 * 60 * 24));
-      const dHrs = Math.floor((dDiff / (1000 * 60 * 60)) % 24);
-      const dMins = Math.floor((dDiff / (1000 * 60)) % 60);
-      const dSecs = Math.floor((dDiff / 1000) % 60);
-
-      setCountdownHtml(
-        `<span class="text-2xl md:text-3xl font-extrabold tracking-tight" style="color:var(--pink); text-shadow: 0 0 10px var(--gp)">${dDays}d ${dHrs}h ${dMins}m ${dSecs}s</span><br/><span class="text-xs opacity-60 tracking-wider">until our next monthly celebration 💕</span>`
-      );
     };
 
     updateStats();
@@ -433,12 +459,27 @@ export default function App() {
       setMusicPlaying(false);
     };
 
+    const handleError = () => {
+      console.warn("Main audio element loading error:", mainAudio.error);
+      setMusicPlaying(false);
+      // If there is an active src and it fails, let's set a descriptive error
+      if (mainAudio.src) {
+        if (mainAudio.src.includes("raw.githubusercontent.com")) {
+          setPlayerError("GitHub Raw link CORS/MIME policy restriction. Try uploading the MP3 from your device or selecting a reliable preloaded track!");
+        } else {
+          setPlayerError("Failed to stream this audio track. Please choose a reliable track or upload an MP3 from your device.");
+        }
+      }
+    };
+
     mainAudio.addEventListener('timeupdate', handleTimeUpdate);
     mainAudio.addEventListener('ended', handleEnded);
+    mainAudio.addEventListener('error', handleError);
 
     return () => {
       mainAudio.removeEventListener('timeupdate', handleTimeUpdate);
       mainAudio.removeEventListener('ended', handleEnded);
+      mainAudio.removeEventListener('error', handleError);
     };
   }, []);
 
@@ -446,6 +487,7 @@ export default function App() {
   const handleAudioFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && mainAudioRef.current) {
+      setPlayerError(null);
       const blobUrl = URL.createObjectURL(file);
       mainAudioRef.current.src = blobUrl;
       setCurrentSongTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -455,8 +497,27 @@ export default function App() {
 
   const playMusic = () => {
     if (mainAudioRef.current) {
-      mainAudioRef.current.play();
-      setMusicPlaying(true);
+      setPlayerError(null);
+      const playPromise = mainAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setMusicPlaying(true);
+          })
+          .catch((err) => {
+            console.error("Audio play promise failed:", err);
+            setMusicPlaying(false);
+            if (err.name === "NotAllowedError") {
+              setPlayerError("Playback blocked by browser autoplay policy. Please click the play button again.");
+            } else if (err.name === "NotSupportedError" || mainAudioRef.current?.error) {
+              setPlayerError("CORS or MIME-type restriction on this link. Try selecting a different track or uploading an MP3!");
+            } else {
+              setPlayerError("Unable to play this track. Please upload an MP3 or select a reliable track below.");
+            }
+          });
+      } else {
+        setMusicPlaying(true);
+      }
     }
   };
 
@@ -464,6 +525,18 @@ export default function App() {
     if (mainAudioRef.current) {
       mainAudioRef.current.pause();
       setMusicPlaying(false);
+    }
+  };
+
+  const handleLoadTrackUrl = (url: string, title: string) => {
+    if (mainAudioRef.current) {
+      setPlayerError(null);
+      mainAudioRef.current.src = url;
+      setCurrentSongTitle(title);
+      // Wait for source to attach
+      setTimeout(() => {
+        playMusic();
+      }, 150);
     }
   };
 
@@ -600,6 +673,28 @@ export default function App() {
     setAnnivRainItems(newItems);
   };
 
+  if (currentPage === 'infinity-love') {
+    return (
+      <InfinityLovePage
+        onBack={() => setCurrentPage('home')}
+        musicPlaying={musicPlaying}
+        onToggleMusic={musicPlaying ? pauseMusic : playMusic}
+        currentSongTitle={currentSongTitle}
+      />
+    );
+  }
+
+  if (currentPage === 'blooming-roses') {
+    return (
+      <BloomingRosesPage
+        onBack={() => setCurrentPage('home')}
+        musicPlaying={musicPlaying}
+        onToggleMusic={musicPlaying ? pauseMusic : playMusic}
+        currentSongTitle={currentSongTitle}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen text-cream relative selection:bg-pink-500/30 selection:text-white">
       {/* BACKGROUND EFFECTS */}
@@ -644,6 +739,34 @@ export default function App() {
 
       {/* FLOATING ACTION BUTTONS */}
       <button 
+        onClick={() => setCurrentPage('infinity-love')} 
+        className="fab animate-pulse" 
+        id="suhana-love-fab" 
+        title="Open 'Infinity Love from Rahat' Page"
+        style={{ 
+          background: 'radial-gradient(circle, rgba(255, 45, 120, 0.4) 0%, rgba(255, 110, 180, 0.2) 100%)', 
+          border: '1.5px solid rgba(255, 110, 180, 0.8)',
+          boxShadow: '0 0 15px rgba(255, 110, 180, 0.4)'
+        }}
+      >
+        <span className="text-base font-bold">∞</span>
+      </button>
+
+      <button 
+        onClick={() => setCurrentPage('blooming-roses')} 
+        className="fab" 
+        id="blooming-roses-fab" 
+        title="Open 'Ready to Bloom (210 Roses)' Page"
+        style={{ 
+          background: 'radial-gradient(circle, rgba(163, 20, 44, 0.5) 0%, rgba(200, 26, 53, 0.25) 100%)', 
+          border: '1.5px solid rgba(239, 66, 80, 0.8)',
+          boxShadow: '0 0 15px rgba(239, 66, 80, 0.4)'
+        }}
+      >
+        <span className="text-base">🌹</span>
+      </button>
+
+      <button 
         onClick={toggleAmbientSynth} 
         className="fab" 
         id="music-btn" 
@@ -681,6 +804,7 @@ export default function App() {
             onClick={() => {
               setShowIntro(false);
               launchAnniversarySurprise();
+              playMusic();
             }}
             className="cursor-pointer"
           >
@@ -717,6 +841,22 @@ export default function App() {
         <a href="#promise-ring">Promise</a>
         <a href="#reasons">Why You</a>
         <a href="#timeline">Story</a>
+        <button
+          onClick={() => setCurrentPage('infinity-love')}
+          className="nav-link"
+          id="nav-infinity-love"
+          title="Open 'Infinity Love from Rahat' Page"
+        >
+          Infinity Love from Rahat
+        </button>
+        <button
+          onClick={() => setCurrentPage('blooming-roses')}
+          className="nav-link"
+          id="nav-blooming-roses"
+          title="Open 'Ready to Bloom (210 Roses)' Page"
+        >
+          Ready to Bloom 🌹
+        </button>
       </nav>
 
       {/* MAIN CONTENT CONTAINERS */}
@@ -747,11 +887,39 @@ export default function App() {
         >
           Where every heartbeat tells your name...
         </motion.p>
+        
+        {/* SPECIAL INVITATION BUTTONS */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.3, duration: 0.8 }}
+            onClick={() => setCurrentPage('infinity-love')}
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/25 via-rose-500/35 to-purple-500/25 border border-pink/50 text-pink hover:text-white hover:border-pink shadow-lg shadow-pink/25 hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm font-medium tracking-wide cursor-pointer"
+          >
+            <span className="text-base font-bold">∞</span>
+            <span>Infinity Love from Rahat</span>
+            <Sparkles className="w-3.5 h-3.5 text-gold" />
+          </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            onClick={() => setCurrentPage('blooming-roses')}
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-900/40 via-red-700/40 to-amber-900/40 border border-[#ef4250]/60 text-[#f96a5f] hover:text-white hover:border-[#ef4250] shadow-lg shadow-red-900/30 hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm font-medium tracking-wide cursor-pointer"
+          >
+            <span className="text-base">🌹</span>
+            <span>Ready to Bloom (210 Roses)</span>
+            <Sparkles className="w-3.5 h-3.5 text-gold" />
+          </motion.button>
+        </div>
+
         <motion.span 
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.6 }}
           transition={{ delay: 2, duration: 1 }}
-          className="scroll-hint mt-16 cursor-pointer"
+          className="scroll-hint mt-14 cursor-pointer"
           onClick={() => {
             document.getElementById('bouquet')?.scrollIntoView({ behavior: 'smooth' });
           }}
@@ -938,6 +1106,15 @@ export default function App() {
         </div>
 
         <p className="bouquet-caption">This bouquet is forever yours 🌹💕</p>
+
+        <button
+          onClick={() => setCurrentPage('blooming-roses')}
+          className="mt-5 px-6 py-2.5 rounded-full bg-gradient-to-r from-red-950/60 via-rose-900/70 to-red-950/60 border border-rose-500/50 text-[#f6ead9] hover:text-white hover:border-rose-400 shadow-lg shadow-red-950/50 hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm font-serif tracking-wide cursor-pointer"
+        >
+          <span className="text-base">🌹</span>
+          <span>Watch 210 Roses Bloom in 3D</span>
+          <span className="text-xs text-[#d9a441]">✨</span>
+        </button>
       </section>
 
       <div className="section-divider" />
@@ -963,21 +1140,23 @@ export default function App() {
       <section id="music" className="py-20 flex flex-col items-center justify-center">
         <div className="w-full max-w-lg px-4">
           <h2 className="anniv-heading text-center mb-8">Our Soundtrack 🎵</h2>
+          
           <div className="glass-card player-wrapper">
             <div className={`album-art ${musicPlaying ? 'playing' : ''}`} id="album-art">
               <div className="visualizer" id="visualizer">
-                {Array.from({ length: 5 }).map((_, i) => (
+                {barHeights.map((h, i) => (
                   <div 
                     key={i} 
                     className="bar" 
                     style={{ 
-                      height: musicPlaying ? `${Math.random() * 25 + 5}px` : '5px',
-                      transition: 'height 0.15s ease' 
+                      height: `${h}px`,
+                      transition: 'height 0.12s ease' 
                     }} 
                   />
                 ))}
               </div>
             </div>
+
             <div className="song-title my-4 line-clamp-1">{currentSongTitle}</div>
             
             <div className="progress-container px-2">
@@ -989,23 +1168,120 @@ export default function App() {
             </div>
 
             <div className="controls my-4">
-              <button className="ctrl-btn" onClick={() => { if (mainAudioRef.current) mainAudioRef.current.currentTime -= 10; }}>⏮</button>
-              <button className="ctrl-btn play-btn" onClick={musicPlaying ? pauseMusic : playMusic}>
+              <button 
+                className="ctrl-btn hover:bg-white/20 transition-all duration-200" 
+                onClick={() => { if (mainAudioRef.current) mainAudioRef.current.currentTime -= 10; }}
+                title="Backward 10s"
+              >
+                ⏮
+              </button>
+              <button 
+                className="ctrl-btn play-btn hover:scale-105 transition-all duration-200" 
+                onClick={musicPlaying ? pauseMusic : playMusic}
+                title={musicPlaying ? "Pause" : "Play"}
+              >
                 {musicPlaying ? <Pause className="w-6 h-6 fill-white stroke-none" /> : <Play className="w-6 h-6 fill-white stroke-none ml-1" />}
               </button>
-              <button className="ctrl-btn" onClick={() => { if (mainAudioRef.current) mainAudioRef.current.currentTime += 10; }}>⏭</button>
+              <button 
+                className="ctrl-btn hover:bg-white/20 transition-all duration-200" 
+                onClick={() => { if (mainAudioRef.current) mainAudioRef.current.currentTime += 10; }}
+                title="Forward 10s"
+              >
+                ⏭
+              </button>
             </div>
-            
-            <label className="file-upload inline-block">
-              Upload MP3 From Device
-              <input 
-                type="file" 
-                ref={audioUploadRef} 
-                onChange={handleAudioFileSelected} 
-                accept="audio/*" 
-              />
-            </label>
-            <audio ref={mainAudioRef} id="main-audio" />
+
+            {/* ERROR ALERT */}
+            {playerError && (
+              <div className="w-full text-xs text-rose bg-rose/10 border border-rose/30 rounded-xl p-3 my-2 text-center animate-pulse leading-relaxed">
+                ⚠️ {playerError}
+              </div>
+            )}
+
+            {/* PRESETS TRACKS SELECTOR */}
+            <div className="w-full mt-4 text-left">
+              <label className="block text-xs uppercase tracking-wider text-white/50 mb-2 font-medium">Select Soundtrack</label>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => handleLoadTrackUrl('https://raw.githubusercontent.com/sharmapratik21/Dandelions/master/Dandelions.mp3', 'Dandelions 🌼 (GitHub)')}
+                  className={`w-full py-2.5 px-4 text-sm rounded-xl text-left border transition-all duration-300 flex items-center justify-between ${
+                    mainAudioRef.current?.src?.includes('Dandelions.mp3') 
+                      ? 'bg-pink/20 border-pink text-cream shadow-md shadow-pink/10' 
+                      : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">🌼 Dandelions (Ruth B cover)</span>
+                  <span className="text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded uppercase">Raw Stream</span>
+                </button>
+
+                <button
+                  onClick={() => handleLoadTrackUrl('https://assets.mixkit.co/music/preview/mixkit-tender-love-155.mp3', 'Tender Love 💖')}
+                  className={`w-full py-2.5 px-4 text-sm rounded-xl text-left border transition-all duration-300 flex items-center justify-between ${
+                    mainAudioRef.current?.src?.includes('tender-love') 
+                      ? 'bg-pink/20 border-pink text-cream shadow-md shadow-pink/10' 
+                      : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">💖 Tender Love (Mixkit Romance)</span>
+                  <span className="text-[10px] bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded uppercase">Reliable Stream</span>
+                </button>
+
+                <button
+                  onClick={() => handleLoadTrackUrl('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Acoustic Daydream 🎸')}
+                  className={`w-full py-2.5 px-4 text-sm rounded-xl text-left border transition-all duration-300 flex items-center justify-between ${
+                    mainAudioRef.current?.src?.includes('SoundHelix-Song-1') 
+                      ? 'bg-pink/20 border-pink text-cream shadow-md shadow-pink/10' 
+                      : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">🎸 Acoustic Daydream (Instrumental)</span>
+                  <span className="text-[10px] bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded uppercase">Reliable Stream</span>
+                </button>
+              </div>
+            </div>
+
+            {/* CUSTOM URL INPUT */}
+            <div className="w-full mt-4 text-left">
+              <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5 font-medium">Or Paste Direct MP3 URL</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="https://example.com/song.mp3"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-cream placeholder-white/30 focus:outline-none focus:border-pink/50 transition-all duration-200"
+                />
+                <button
+                  onClick={() => {
+                    if (customUrl.trim()) {
+                      handleLoadTrackUrl(customUrl.trim(), "Custom Link 🔗");
+                    }
+                  }}
+                  className="px-4 py-2 bg-pink/20 border border-pink/40 hover:bg-pink/35 text-pink text-xs font-semibold rounded-xl transition-all duration-200"
+                >
+                  Load
+                </button>
+              </div>
+            </div>
+
+            {/* DEVICE FILE UPLOAD */}
+            <div className="w-full mt-5 pt-4 border-t border-white/5 flex flex-col items-center gap-2">
+              <span className="text-xs text-white/40 mb-1">Have your own Ruth B "Dandelions.mp3" file?</span>
+              <label className="file-upload inline-block py-2 px-5 hover:scale-102 transition-transform duration-200">
+                Upload MP3 From Device 💻
+                <input 
+                  type="file" 
+                  ref={audioUploadRef} 
+                  onChange={handleAudioFileSelected} 
+                  accept="audio/*" 
+                />
+              </label>
+              <span className="text-[10px] text-white/30 text-center italic mt-0.5">
+                (Highly recommended: Local uploads skip loading delays & bypass CORS policies entirely!)
+              </span>
+            </div>
+
+            <audio ref={mainAudioRef} id="main-audio" src="https://raw.githubusercontent.com/sharmapratik21/Dandelions/master/Dandelions.mp3" loop />
           </div>
         </div>
       </section>
@@ -1018,7 +1294,7 @@ export default function App() {
         
         <div className="glass-card countdown-card border border-gold shadow-lg shadow-gold/5 max-w-lg mb-8 mx-4">
           <p className="text-sm md:text-base italic leading-relaxed text-cream/90">
-            "My commitment to you grows stronger every single day. Every month with you is another beautiful chapter in our forever story."
+            "5 wonderful months of pure joy, deep understanding, and timeless love. Every day with you feels like a beautiful dream come true."
           </p>
         </div>
 
@@ -1050,7 +1326,7 @@ export default function App() {
         </div>
 
         <div className="glass-card countdown-card mt-8 mx-4 max-w-md w-full">
-          <p className="countdown-title">💝 Countdown to Next Monthly Anniversary</p>
+          <p className="countdown-title">💝 Countdown to Our 5th Month Anniversary</p>
           <div id="countdown-display" dangerouslySetInnerHTML={{ __html: countdownHtml }} />
         </div>
       </section>
@@ -1304,7 +1580,10 @@ export default function App() {
             <p className="mt-5 text-cream text-lg italic">May your day be as beautiful as your soul.</p>
             <button 
               className="file-upload mt-8 text-base px-8 py-3" 
-              onClick={() => setShowBirthdayModal(false)}
+              onClick={() => {
+                setShowBirthdayModal(false);
+                playMusic();
+              }}
             >
               Enter Our Universe ✨
             </button>
@@ -1312,7 +1591,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* MONTHLY ANNIVERSARY SURPRISE CELEBRATION MODAL */}
+      {/* 5TH MONTH ANNIVERSARY CELEBRATION MODAL */}
       <AnimatePresence>
         {showMonthlyModal && (
           <motion.div 
@@ -1323,10 +1602,13 @@ export default function App() {
             exit={{ opacity: 0 }}
           >
             <div className="anniv-blast-text">Happy {getAnniversaryOrdinal()} Month Anniversary<br/>my sweetheart suhi 💕</div>
-            <p className="mt-5 text-cream text-lg italic">Celebrating another beautiful month with you.</p>
+            <p className="mt-5 text-cream text-lg italic">Celebrating 5 incredible months of endless love, memories, and happiness with you.</p>
             <button 
               className="file-upload mt-8 text-base px-8 py-3 relative z-10" 
-              onClick={() => setShowMonthlyModal(false)}
+              onClick={() => {
+                setShowMonthlyModal(false);
+                playMusic();
+              }}
             >
               Enter Our Universe ✨
             </button>
@@ -1360,11 +1642,14 @@ export default function App() {
             <div className="anniv-love-content relative z-20">
               <div className="anniv-love-heading">Happy {getAnniversaryOrdinal()} Month Anniversary<br/>My Suhinila 💕</div>
               <p className="anniv-love-sub leading-relaxed">
-                Every name below is a piece of how much I adore you — today, and always.
+                Celebrating 5 beautiful months together — every moment with you is my greatest gift.
               </p>
               <button 
                 className="file-upload mt-8 text-base px-8 py-3 relative z-30" 
-                onClick={() => setShowAnnivLoveModal(false)}
+                onClick={() => {
+                  setShowAnnivLoveModal(false);
+                  playMusic();
+                }}
               >
                 Enter Our Universe ✨
               </button>
